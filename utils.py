@@ -27,23 +27,69 @@ def load_pipeline():
     global FEATURES_FINALES, NUM_COLS, CAT_COLS, P01_RATIO, P99_RATIO, PIPELINE
     
     try:
-        with open('preprocessing_pipeline.pkl', 'rb') as f:
+        import os
+        
+        # Buscar el archivo del pipeline en diferentes ubicaciones
+        pipeline_files = [
+            'preprocessing_pipeline.pkl',
+            'pipeline.pkl',
+            'models/preprocessing_pipeline.pkl',
+            '../preprocessing_pipeline.pkl'
+        ]
+        
+        pipeline_file = None
+        for file in pipeline_files:
+            if os.path.exists(file):
+                pipeline_file = file
+                st.info(f"📂 Encontrado pipeline: {file}")
+                break
+        
+        if pipeline_file is None:
+            st.error("""
+            ❌ No se encontró el archivo del pipeline.
+            
+            Archivos esperados:
+            - preprocessing_pipeline.pkl
+            - pipeline.pkl
+            
+            Por favor, asegúrate de subir el archivo a tu repositorio.
+            """)
+            return None
+        
+        # Cargar el pipeline
+        with open(pipeline_file, 'rb') as f:
             pipeline_dict = pickle.load(f)
         
+        # Verificar que tiene las claves esperadas
+        expected_keys = ['preprocessing_pipeline', 'features_finales', 'num_cols', 'cat_cols']
+        for key in expected_keys:
+            if key not in pipeline_dict:
+                st.warning(f"⚠️ El pipeline no tiene la clave: {key}")
+        
         # Extraer el pipeline real
-        PIPELINE = pipeline_dict['preprocessing_pipeline']
+        PIPELINE = pipeline_dict.get('preprocessing_pipeline')
         
         # Guardar configuraciones
-        FEATURES_FINALES = pipeline_dict['features_finales']
-        NUM_COLS = pipeline_dict['num_cols']
-        CAT_COLS = pipeline_dict['cat_cols']
-        P01_RATIO = pipeline_dict['p01_ratio']
-        P99_RATIO = pipeline_dict['p99_ratio']
+        FEATURES_FINALES = pipeline_dict.get('features_finales', [])
+        NUM_COLS = pipeline_dict.get('num_cols', [])
+        CAT_COLS = pipeline_dict.get('cat_cols', [])
+        P01_RATIO = pipeline_dict.get('p01_ratio')
+        P99_RATIO = pipeline_dict.get('p99_ratio')
+        
+        if PIPELINE is None:
+            st.error("❌ El archivo no contiene un pipeline válido")
+            return None
         
         st.success(f"✅ Pipeline cargado correctamente")
+        st.info(f"📊 Features numéricas: {len(NUM_COLS)}")
+        st.info(f"📊 Features categóricas: {len(CAT_COLS)}")
+        
         return PIPELINE
+        
     except Exception as e:
-        st.error(f"❌ Error cargando pipeline: {e}")
+        st.error(f"❌ Error cargando pipeline: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
         return None
 
 # =============================================================================
