@@ -27,22 +27,7 @@ from utils import (
 )
 
 
-import os
-
-st.sidebar.markdown("### 📁 Archivos en el repositorio:")
-archivos = os.listdir('.')
-for archivo in archivos:
-    if archivo.endswith('.json') or archivo.endswith('.h5') or archivo.endswith('.pkl'):
-        st.sidebar.write(f"- {archivo}")
-
-# Verificar subcarpetas
-if os.path.exists('modelo_final'):
-    st.sidebar.markdown("### 📁 Archivos en modelo_final/:")
-    for archivo in os.listdir('modelo_final'):
-        if archivo.endswith('.json') or archivo.endswith('.h5'):
-            st.sidebar.write(f"- modelo_final/{archivo}")
-
-# ========================================================================
+# =============================================================================
 # CONFIGURACIÓN DE PÁGINA
 # =============================================================================
 
@@ -52,6 +37,8 @@ st.set_page_config(
     layout="wide"
 )
 
+# ====
+
 # =============================================================================
 # CSS PERSONALIZADO
 # =============================================================================
@@ -59,7 +46,9 @@ def load_css():
     with open("style.css") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-load_css()
+# LLAMAR A LA FUNCIÓN DESPUÉS DE DEFINIRLA
+load_css()  # <-- Esto debe estar DESPUÉS de la definición
+
 # =============================================================================
 # CARGA DE MODELOS
 # =============================================================================
@@ -72,6 +61,7 @@ def load_resources():
     return pipeline, keras_model, sklearn_model
 
 pipeline, keras_model, sklearn_model = load_resources()
+    
 # =============================================================================
 # HEADER
 # =============================================================================
