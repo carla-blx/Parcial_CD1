@@ -1,0 +1,150 @@
+/* style.css - Diseño profesional para Streamlit */
+
+/* Color principal de la app */
+:root {
+    --primary-color: #2E86AB;
+    --secondary-color: #A23B72;
+    --success-color: #2E8B57;
+    --warning-color: #F18F01;
+    --danger-color: #C73E1D;
+    --dark-bg: #F8F9FA;
+    --light-bg: #F8F9FA;
+}
+
+/* Fondo general de la app */
+[data-testid="stAppViewContainer"] {
+    background-color: #121233; 
+}
+
+/* Header personalizado */
+.main-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    padding: 2rem;
+    border-radius: 20px;
+    color: white;
+    text-align: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.main-header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.main-header p {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+}
+
+
+
+/* Botón predecir */
+.stButton > button {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border-radius: 40px;
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* Tarjeta de resultado */
+.result-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    border-radius: 20px;
+    color: white;
+    text-align: center;
+    margin-top: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.result-card h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.probability {
+    font-size: 3rem;
+    font-weight: 800;
+    margin: 1rem 0;
+}
+
+.prediction {
+    font-size: 1.8rem;
+    font-weight: 700;
+    padding: 0.5rem;
+    border-radius: 50px;
+    display: inline-block;
+    margin-top: 0.5rem;
+}
+
+/* Sidebar personalizado */
+.css-1d391kg {
+    background-color: var(--dark-bg);
+}
+
+
+
+/* Expander personalizado */
+.streamlit-expanderHeader {
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 10px;
+}
+
+/* Progress bar personalizada */
+.stProgress > div > div {
+    background-color: var(--primary-color);
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 1.5rem;
+    color: #666;
+    border-top: 1px solid #ddd;
+}
+
+st.markdown("""
+<style>
+.result-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: center;
+    margin-top: 20px;
+}
+
+.result-card h2 {
+    color: #333;
+}
+
+.probability {
+    font-size: 40px;
+    font-weight: bold;
+    color: #1f77b4;
+    margin: 10px 0;
+}
+
+.prediction {
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 20px;
+    font-weight: bold;
+}
+</style>
