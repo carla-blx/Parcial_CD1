@@ -27,12 +27,20 @@ from utils import (
 )
 
 
-st.sidebar.markdown("### 🔧 Versiones:")
-st.sidebar.code(f"""
-Python: {sys.version.split()[0]}
-TF: {tf.__version__}
-Keras: {tf.keras.__version__}
-""")
+import os
+
+st.sidebar.markdown("### 📁 Archivos en el repositorio:")
+archivos = os.listdir('.')
+for archivo in archivos:
+    if archivo.endswith('.json') or archivo.endswith('.h5') or archivo.endswith('.pkl'):
+        st.sidebar.write(f"- {archivo}")
+
+# Verificar subcarpetas
+if os.path.exists('modelo_final'):
+    st.sidebar.markdown("### 📁 Archivos en modelo_final/:")
+    for archivo in os.listdir('modelo_final'):
+        if archivo.endswith('.json') or archivo.endswith('.h5'):
+            st.sidebar.write(f"- modelo_final/{archivo}")
 
 # ========================================================================
 # CONFIGURACIÓN DE PÁGINA
