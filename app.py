@@ -58,6 +58,13 @@ def load_resources():
     pipeline = load_pipeline()
     keras_model = load_keras_model()
     sklearn_model = load_sklearn_model()
+    
+    # Verificar si los modelos se cargaron correctamente
+    if keras_model is None:
+        st.warning("⚠️ Modelo Keras no disponible. Usando valores por defecto.")
+    if sklearn_model is None:
+        st.warning("⚠️ Modelo Sklearn no disponible. Usando valores por defecto.")
+    
     return pipeline, keras_model, sklearn_model
 
 pipeline, keras_model, sklearn_model = load_resources()
