@@ -166,62 +166,65 @@ def preprocess_input(data_dict: dict) -> np.ndarray:
 # utils.py - Reemplaza la función load_keras_model
 
 def load_keras_model():
-    """Carga modelo desde JSON y pesos (compatible entre versiones)"""
+    """Carga modelo desde JSON y pesos - COMPATIBLE 100%"""
     import json
     import os
-    import streamlit as st
     
     try:
-        # Buscar archivos en diferentes ubicaciones
-        json_path = None
-        weights_path = None
+        # Buscar archivos JSON y pesos en diferentes ubicaciones
+        json_file = None
+        weights_file = None
         
-        # Posibles ubicaciones
-        locations = [
-            ('model_architecture.json', 'model.weights.h5'),
-            ('model_architecture.json', 'model.weights.h5'),
-            ('model_architecture.json', 'model.weights.h5'),
+        # Lista de posibles ubicaciones
+        posibles_ubicaciones = [
+            ("model_architecture.json", "model.weights.h5"),
+            ("modelo_final/model_architecture.json", "modelo_final/model_weights.h5"),
+            ("data/model_architecture.json", "data/model_weights.h5"),
+            ("../model_architecture.json", "../model_weights.h5"),
         ]
         
-        for json_loc, weights_loc in locations:
-            if os.path.exists(json_loc) and os.path.exists(weights_loc):
-                json_path = json_loc
-                weights_path = weights_loc
+        for json_path, weights_path in posibles_ubicaciones:
+            if os.path.exists(json_path) and os.path.exists(weights_path):
+                json_file = json_path
+                weights_file = weights_path
                 break
         
-        if json_path is None:
-            st.error("❌ No se encuentran model_architecture.json y model.weights.h5")
-            st.info("""
+        # Si no encuentra los archivos, mostrar error claro
+        if json_file is None:
+            error_msg = """
+            ❌ No se encontraron los archivos del modelo.
+            
             Archivos necesarios:
             - model_architecture.json
             - model_weights.h5
             
-            Por favor, súbelos a tu repositorio.
-            """)
+            Por favor, asegúrate de haber subido estos archivos a tu repositorio.
+            """
+            st.error(error_msg)
             return None
         
-        # Cargar arquitectura
-        with open(json_path, 'r') as f:
+        # Cargar arquitectura desde JSON
+        with open(json_file, 'r') as f:
             model_json = f.read()
         
-        # Reconstruir modelo
+        # Reconstruir el modelo (sin compilar)
         model = tf.keras.models.model_from_json(model_json)
         
-        # Cargar pesos
-        model.load_weights(weights_path)
+        # Cargar los pesos
+        model.load_weights(weights_file)
         
-        # Compilar modelo (ajusta según tu problema)
+        # Compilar el modelo (ajusta según tu problema)
         model.compile(
             optimizer='adam',
-            loss='binary_crossentropy',  # Cambia a 'categorical_crossentropy' si es multiclase
+            loss='binary_crossentropy',  # Cambia si es clasificación multiclase
             metrics=['accuracy']
         )
         
-        st.success(f"✅ Modelo Keras cargado exitosamente desde {json_path}")
+        st.success(f"✅ Modelo Keras cargado exitosamente desde {json_file}")
         return model
         
     except Exception as e:
-        st.error(f"❌ Error cargando modelo: {str(e)}")
+        st.error(f"❌ Error detallado al cargar modelo: {str(e)}")
         import traceback
         st.code(traceback.format_exc())
         return None
@@ -263,39 +266,3 @@ def predict_sklearn(model, X: np.ndarray) -> float:
     """Predicción con Scikit-Learn"""
     proba = model.predict_proba(X)[0][1]
     return float(proba)
-
-# =============================================================================
-# TEST
-
-
-if __name__ == "__main__":
-    # Prueba con datos de ejemplo
-    test_data = {
-        'LIMIT_BAL': 200000,
-        'AGE': 30,
-        'PAY_1': 0,
-        'PAY_2': 0,
-        'PAY_3': 0,
-        'PAY_4': 0,
-        'PAY_5': 0,
-        'PAY_6': 0,
-        'BILL_AMT1': 5000,
-        'BILL_AMT2': 4000,
-        'BILL_AMT3': 3000,
-        'BILL_AMT4': 2500,
-        'BILL_AMT5': 2000,
-        'BILL_AMT6': 1500,
-        'PAY_AMT1': 1000,
-        'PAY_AMT2': 1000,
-        'PAY_AMT3': 1000,
-        'PAY_AMT4': 1000,
-        'PAY_AMT5': 1000,
-        'PAY_AMT6': 1000,
-        'SEX': 1,
-        'EDUCATION': 2,
-        'MARRIAGE': 1
-    }
-    
-    X = preprocess_input(test_data)
-    print(f"\n✅ Shape final: {X.shape}")
-    print(f"¿Es 31? {X.shape[1] == 31}")
