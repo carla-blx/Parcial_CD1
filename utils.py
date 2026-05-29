@@ -163,40 +163,68 @@ def preprocess_input(data_dict: dict) -> np.ndarray:
 # LOADERS
 # =============================================================================
 
+# utils.py - Reemplaza la función load_keras_model
+
 def load_keras_model():
-    """Carga el modelo de Keras desde archivo .h5 (compatible)"""
+    """Carga modelo desde JSON y pesos (compatible entre versiones)"""
+    import json
     import os
+    import streamlit as st
     
     try:
-        # Intentar cargar .h5 primero (más compatible)
-        if os.path.exists("keras_model.h5"):
-            model_path = "keras_model.h5"
-        elif os.path.exists("keras_model.h5"):
-            model_path = "keras_model.h5"
-        else:
-            # Fallback a .keras
-            if os.path.exists("keras_model.keras"):
-                model_path = "keras_model.keras"
-            else:
-                model_path = "keras_model.keras"
+        # Buscar archivos en diferentes ubicaciones
+        json_path = None
+        weights_path = None
         
-        # Cargar modelo sin compilar para evitar problemas de versión
-        model = tf.keras.models.load_model(model_path, compile=False)
+        # Posibles ubicaciones
+        locations = [
+            ('model_architecture.json', 'model.weights.h5'),
+            ('model_architecture.json', 'model.weights.h5'),
+            ('model_architecture.json', 'model.weights.h5'),
+        ]
         
-        # Recompilar el modelo (ajusta según tu modelo)
-        # Si es clasificación binaria:
+        for json_loc, weights_loc in locations:
+            if os.path.exists(json_loc) and os.path.exists(weights_loc):
+                json_path = json_loc
+                weights_path = weights_loc
+                break
+        
+        if json_path is None:
+            st.error("❌ No se encuentran model_architecture.json y model.weights.h5")
+            st.info("""
+            Archivos necesarios:
+            - model_architecture.json
+            - model_weights.h5
+            
+            Por favor, súbelos a tu repositorio.
+            """)
+            return None
+        
+        # Cargar arquitectura
+        with open(json_path, 'r') as f:
+            model_json = f.read()
+        
+        # Reconstruir modelo
+        model = tf.keras.models.model_from_json(model_json)
+        
+        # Cargar pesos
+        model.load_weights(weights_path)
+        
+        # Compilar modelo (ajusta según tu problema)
         model.compile(
             optimizer='adam',
-            loss='binary_crossentropy',  # Cambia a categorical_crossentropy si es multiclase
+            loss='binary_crossentropy',  # Cambia a 'categorical_crossentropy' si es multiclase
             metrics=['accuracy']
         )
         
+        st.success(f"✅ Modelo Keras cargado exitosamente desde {json_path}")
         return model
         
     except Exception as e:
-        st.error(f"Error cargando modelo Keras: {e}")
-        st.info(f"Buscando en: {model_path if 'model_path' in locals() else 'No se encontró archivo'}")
-        raise
+        st.error(f"❌ Error cargando modelo: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
+        return None
 
 def load_sklearn_model():
     """Carga el modelo de Scikit-Learn"""
