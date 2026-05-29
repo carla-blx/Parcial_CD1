@@ -19,12 +19,12 @@ Referencia: Lichman, M. (2013). UCI Machine Learning Repository.
 
 - Python 3.9+
 - Pandas, NumPy (manipulación de datos)
-- Scikit-learn (preprocesamiento, modelos clásicos)
-- TensorFlow/Keras y PyTorch (redes neuronales)
+- Scikit-learn (preprocesamiento, modelos clásicos, red neuronal)
+- Keras (redes neuronales)
 - SHAP (interpretabilidad)
 - Streamlit (aplicación interactiva)
 
 ## Reproducibilidad
 
-**Semilla global fijada en 20220760** en todos los notebooks y scripts.
+**Semilla global fijada en 42** en todos los notebooks y scripts.
 
