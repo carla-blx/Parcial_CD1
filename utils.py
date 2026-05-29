@@ -196,7 +196,7 @@ def load_keras_model():
             
             Archivos necesarios:
             - model_architecture.json
-            - model_weights.h5
+            - model.weights.h5
             
             Por favor, asegúrate de haber subido estos archivos a tu repositorio.
             """
