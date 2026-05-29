@@ -6,6 +6,7 @@ import numpy as np
 import joblib
 import tensorflow as tf
 import pickle
+import streamlit as st  #
 
 # Variables globales
 FEATURES_FINALES = None
@@ -163,9 +164,39 @@ def preprocess_input(data_dict: dict) -> np.ndarray:
 # =============================================================================
 
 def load_keras_model():
-    """Carga el modelo de Keras"""
-    model = tf.keras.models.load_model("keras_model.keras")
-    return model
+    """Carga el modelo de Keras desde archivo .h5 (compatible)"""
+    import os
+    
+    try:
+        # Intentar cargar .h5 primero (más compatible)
+        if os.path.exists("keras_model.h5"):
+            model_path = "keras_model.h5"
+        elif os.path.exists("keras_model.h5"):
+            model_path = "keras_model.h5"
+        else:
+            # Fallback a .keras
+            if os.path.exists("keras_model.keras"):
+                model_path = "keras_model.keras"
+            else:
+                model_path = "keras_model.keras"
+        
+        # Cargar modelo sin compilar para evitar problemas de versión
+        model = tf.keras.models.load_model(model_path, compile=False)
+        
+        # Recompilar el modelo (ajusta según tu modelo)
+        # Si es clasificación binaria:
+        model.compile(
+            optimizer='adam',
+            loss='binary_crossentropy',  # Cambia a categorical_crossentropy si es multiclase
+            metrics=['accuracy']
+        )
+        
+        return model
+        
+    except Exception as e:
+        st.error(f"Error cargando modelo Keras: {e}")
+        st.info(f"Buscando en: {model_path if 'model_path' in locals() else 'No se encontró archivo'}")
+        raise
 
 def load_sklearn_model():
     """Carga el modelo de Scikit-Learn"""
