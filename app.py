@@ -10,6 +10,13 @@ Created on Tue May 26 23:45:17 2026
 # ============================================================================
 
 import streamlit as st
+st.set_page_config(
+    page_title="Predicción de Default",
+    page_icon="🚨",
+    layout="wide"
+)
+
+# Resto de imports DESPUÉS de st.set_page_config
 import pandas as pd
 import plotly.graph_objects as go
 import joblib
@@ -26,28 +33,17 @@ from utils import (
     get_model_info
 )
 
-
-# =============================================================================
-# CONFIGURACIÓN DE PÁGINA
-# =============================================================================
-
-st.set_page_config(
-    page_title="Predicción de Default",
-    page_icon="🚨",
-    layout="wide"
-)
-
-# ====
-
 # =============================================================================
 # CSS PERSONALIZADO
 # =============================================================================
-def load_css():
-    with open("style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# LLAMAR A LA FUNCIÓN DESPUÉS DE DEFINIRLA
-load_css()  # <-- Esto debe estar DESPUÉS de la definición
+def load_css():
+    try:
+        with open("style.css") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        # Si no existe style.css, no hacer nada
+        pass
 
 # =============================================================================
 # CARGA DE MODELOS
