@@ -48,7 +48,7 @@ def load_pipeline():
         return None
 
 # Cargar pipeline al inicio
-load_pipeline()
+#load_pipeline()
 
 # =============================================================================
 # FUNCIONES DE CREACIÓN DE FEATURES
