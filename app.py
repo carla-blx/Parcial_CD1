@@ -26,6 +26,14 @@ from utils import (
     get_model_info
 )
 
+
+st.sidebar.markdown("### 🔧 Versiones:")
+st.sidebar.code(f"""
+Python: {sys.version.split()[0]}
+TF: {tf.__version__}
+Keras: {tf.keras.__version__}
+""")
+
 # ========================================================================
 # CONFIGURACIÓN DE PÁGINA
 # =============================================================================
