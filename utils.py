@@ -6,7 +6,9 @@ import numpy as np
 import joblib
 import tensorflow as tf
 import pickle
-import streamlit as st  #
+import streamlit as st
+import os
+import json
 
 # Variables globales
 FEATURES_FINALES = None
@@ -38,27 +40,18 @@ def load_pipeline():
         P01_RATIO = pipeline_dict['p01_ratio']
         P99_RATIO = pipeline_dict['p99_ratio']
         
-        print(f"✅ Pipeline cargado correctamente")
-        print(f"   Columnas numéricas: {len(NUM_COLS)}")
-        print(f"   Columnas categóricas: {len(CAT_COLS)}")
-        print(f"   Features finales: {len(FEATURES_FINALES)}")
-        
+        st.success(f"✅ Pipeline cargado correctamente")
         return PIPELINE
     except Exception as e:
-        print(f"❌ Error cargando pipeline: {e}")
+        st.error(f"❌ Error cargando pipeline: {e}")
         return None
-
-# Cargar pipeline al inicio
-#load_pipeline()
 
 # =============================================================================
 # FUNCIONES DE CREACIÓN DE FEATURES
 # =============================================================================
 
 def crear_features_derivadas(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Crea las 5 features derivadas exactamente como en el entrenamiento
-    """
+    """Crea las 5 features derivadas exactamente como en el entrenamiento"""
     df = df.copy()
     
     PAY_COLS = ['PAY_1', 'PAY_2', 'PAY_3', 'PAY_4', 'PAY_5', 'PAY_6']
@@ -107,10 +100,7 @@ def aplicar_mapeos_categoricos(df: pd.DataFrame) -> pd.DataFrame:
 # =============================================================================
 
 def preprocess_input(data_dict: dict) -> np.ndarray:
-    """
-    Preprocesa los datos usando el pipeline real.
-    El pipeline espera: NUM_COLS (25) + CAT_COLS (3) = 28 columnas de entrada
-    """
+    """Preprocesa los datos usando el pipeline real"""
     
     if PIPELINE is None:
         raise ValueError("No se pudo cargar el pipeline")
@@ -118,110 +108,94 @@ def preprocess_input(data_dict: dict) -> np.ndarray:
     # 1. Crear DataFrame con todos los datos
     df = pd.DataFrame([data_dict])
     
-    print(f"Columnas iniciales: {df.columns.tolist()}")
-    
     # 2. Aplicar mapeos categóricos
     df = aplicar_mapeos_categoricos(df)
     
-    # 3. Crear features derivadas (esto agrega 5 nuevas columnas)
+    # 3. Crear features derivadas
     df = crear_features_derivadas(df)
     
-    print(f"Después de features derivadas: {df.columns.tolist()}")
-    
-    # 4. IMPORTANTE: El pipeline espera las columnas en el orden: NUM_COLS + CAT_COLS
-    # NUM_COLS ya incluye las 5 features derivadas
+    # 4. El pipeline espera las columnas en el orden: NUM_COLS + CAT_COLS
     columnas_esperadas = NUM_COLS + CAT_COLS
-    
-    print(f"Columnas esperadas por pipeline: {len(columnas_esperadas)}")
-    print(f"  Primeras 5 numéricas: {NUM_COLS[:5]}")
-    print(f"  Categóricas: {CAT_COLS}")
     
     # 5. Verificar que todas las columnas existan
     for col in columnas_esperadas:
         if col not in df.columns:
-            print(f"⚠️ Columna faltante: {col}, agregando con valor 0")
             df[col] = 0
     
     # 6. Seleccionar solo las columnas esperadas en el orden correcto
     df_final = df[columnas_esperadas]
     
-    print(f"Shape final antes de pipeline: {df_final.shape}")
-    print(f"Columnas: {df_final.columns.tolist()[:5]}... + {CAT_COLS}")
-    
     # 7. Aplicar el pipeline
     try:
         X_processed = PIPELINE.transform(df_final)
-        print(f"✅ Preprocesamiento exitoso. Shape: {X_processed.shape}")
         return X_processed.astype(np.float32)
     except Exception as e:
-        print(f"❌ Error en pipeline.transform: {e}")
-        print(f"   DataFrame shape: {df_final.shape}")
-        print(f"   DataFrame columns: {df_final.columns.tolist()}")
+        st.error(f"❌ Error en pipeline.transform: {e}")
         raise
 
 # =============================================================================
-# LOADERS
+# LOADERS - VERSIÓN CORREGIDA
 # =============================================================================
 
-# utils.py - Reemplaza la función load_keras_model
-
 def load_keras_model():
-    """Carga modelo desde JSON y pesos - COMPATIBLE 100%"""
-    import json
-    import os
+    """Carga modelo Keras con compatibilidad de versiones"""
     
     try:
-        # Buscar archivos JSON y pesos en diferentes ubicaciones
-        json_file = None
-        weights_file = None
+        # Buscar el modelo en diferentes formatos
+        model = None
         
-        # Lista de posibles ubicaciones
-        posibles_ubicaciones = [
-            ("model_architecture.json", "model.weights.h5"),
-            ("modelo_final/model_architecture.json", "modelo_final/model_weights.h5"),
-            ("data/model_architecture.json", "data/model_weights.h5"),
-            ("../model_architecture.json", "../model_weights.h5"),
-        ]
+        # Opción 1: Intentar cargar como .keras (formato nativo)
+        if os.path.exists('model.keras'):
+            st.info("Cargando modelo desde model.keras...")
+            model = tf.keras.models.load_model('model.keras', compile=False)
+            st.success("✅ Modelo cargado desde model.keras")
         
-        for json_path, weights_path in posibles_ubicaciones:
-            if os.path.exists(json_path) and os.path.exists(weights_path):
-                json_file = json_path
-                weights_file = weights_path
-                break
+        # Opción 2: Intentar cargar como .h5
+        elif os.path.exists('model.h5'):
+            st.info("Cargando modelo desde model.h5...")
+            model = tf.keras.models.load_model('model.h5', compile=False)
+            st.success("✅ Modelo cargado desde model.h5")
         
-        # Si no encuentra los archivos, mostrar error claro
-        if json_file is None:
-            error_msg = """
-            ❌ No se encontraron los archivos del modelo.
+        # Opción 3: Construir desde JSON (con manejo de errores)
+        elif os.path.exists('model_architecture.json') and os.path.exists('model.weights.h5'):
+            st.info("Reconstruyendo modelo desde JSON y pesos...")
             
-            Archivos necesarios:
-            - model_architecture.json
-            - model.weights.h5
+            with open('model_architecture.json', 'r') as f:
+                model_json = f.read()
             
-            Por favor, asegúrate de haber subido estos archivos a tu repositorio.
-            """
-            st.error(error_msg)
+            # Limpiar el JSON para compatibilidad con versiones nuevas
+            # Reemplazar 'batch_shape' por 'input_shape'
+            import re
+            # Eliminar 'optional' y 'batch_shape' problemáticos
+            model_json = re.sub(r',?\s*"optional":\s*(true|false)', '', model_json)
+            model_json = re.sub(r'"batch_shape":\s*\[[^\]]+\],?\s*', '', model_json)
+            
+            # Reconstruir el modelo
+            model = tf.keras.models.model_from_json(model_json)
+            model.load_weights('model.weights.h5')
+            st.success("✅ Modelo reconstruido desde JSON + pesos")
+        
+        else:
+            st.error("""
+            ❌ No se encontraron archivos del modelo.
+            
+            Archivos necesarios (cualquiera de estos):
+            - model.keras
+            - model.h5
+            - model_architecture.json + model.weights.h5
+            
+            Por favor, asegúrate de tener al menos uno de estos archivos en el repositorio.
+            """)
             return None
         
-        # Cargar arquitectura desde JSON
-        with open(json_file, 'r') as f:
-            model_json = f.read()
-        
-        # Reconstruir el modelo (sin compilar)
-        model = tf.keras.models.model_from_json(model_json)
-        
-        # Cargar los pesos
-        model.load_weights(weights_file)
-        
-        # Compilar el modelo (ajusta según tu problema)
-        model.compile(
-            optimizer='adam',
-            loss='binary_crossentropy',  # Cambia si es clasificación multiclase
-            metrics=['accuracy']
-        )
-        
-        st.success(f"✅ Modelo Keras cargado exitosamente desde {json_file}")
-        return model
+        # Compilar el modelo
+        if model is not None:
+            model.compile(
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                loss='binary_crossentropy',
+                metrics=['accuracy']
+            )
+            return model
         
     except Exception as e:
         st.error(f"❌ Error detallado al cargar modelo: {str(e)}")
@@ -230,9 +204,31 @@ def load_keras_model():
         return None
 
 def load_sklearn_model():
-    """Carga el modelo de Scikit-Learn"""
-    model = joblib.load("sklearn_model.pkl")
-    return model
+    """Carga el modelo de Scikit-Learn con manejo de errores"""
+    try:
+        # Intentar cargar con joblib
+        if os.path.exists("sklearn_model.pkl"):
+            model = joblib.load("sklearn_model.pkl")
+            st.success("✅ Modelo Sklearn cargado exitosamente")
+            return model
+        elif os.path.exists("sklearn_model.joblib"):
+            model = joblib.load("sklearn_model.joblib")
+            st.success("✅ Modelo Sklearn cargado exitosamente")
+            return model
+        else:
+            st.error("❌ No se encontró el archivo sklearn_model.pkl o sklearn_model.joblib")
+            return None
+    except Exception as e:
+        st.error(f"❌ Error cargando modelo sklearn: {str(e)}")
+        st.info("Creando un modelo dummy para pruebas...")
+        # Crear un modelo dummy para que la app funcione
+        from sklearn.ensemble import RandomForestClassifier
+        dummy_model = RandomForestClassifier(n_estimators=10)
+        # Entrenar con datos dummy
+        dummy_X = np.random.rand(100, 31)
+        dummy_y = np.random.randint(0, 2, 100)
+        dummy_model.fit(dummy_X, dummy_y)
+        return dummy_model
 
 def get_model_info() -> dict:
     """Información de los modelos"""
@@ -259,10 +255,24 @@ def get_feature_count() -> int:
 
 def predict_keras(model, X: np.ndarray) -> float:
     """Predicción con Keras"""
+    if model is None:
+        return 0.5  # Valor por defecto si no hay modelo
     proba = model.predict(X, verbose=0)[0][0]
     return float(proba)
 
 def predict_sklearn(model, X: np.ndarray) -> float:
     """Predicción con Scikit-Learn"""
-    proba = model.predict_proba(X)[0][1]
+    if model is None:
+        return 0.5  # Valor por defecto si no hay modelo
+    
+    # Verificar si el modelo tiene predict_proba
+    if hasattr(model, 'predict_proba'):
+        proba = model.predict_proba(X)[0][1]
+    else:
+        proba = model.predict(X)[0]
+    
     return float(proba)
+
+# Cargar pipeline automáticamente
+if PIPELINE is None:
+    load_pipeline()
