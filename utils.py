@@ -136,69 +136,60 @@ def preprocess_input(data_dict: dict) -> np.ndarray:
 # =============================================================================
 # LOADERS - VERSIÓN CORREGIDA
 # =============================================================================
-
 def load_keras_model():
-    """Carga modelo Keras con compatibilidad de versiones"""
-    
+    """Carga modelo Keras desde archivo .keras"""
     try:
         # Buscar el modelo en diferentes formatos
-        model = None
-        
-        # Opción 1: Intentar cargar como .keras (formato nativo)
-        if os.path.exists('model.keras'):
-            st.info("Cargando modelo desde model.keras...")
-            model = tf.keras.models.load_model('model.keras', compile=False)
-            st.success("✅ Modelo cargado desde model.keras")
-        
-        # Opción 2: Intentar cargar como .h5
-        elif os.path.exists('model.h5'):
-            st.info("Cargando modelo desde model.h5...")
-            model = tf.keras.models.load_model('model.h5', compile=False)
-            st.success("✅ Modelo cargado desde model.h5")
-        
-        # Opción 3: Construir desde JSON (con manejo de errores)
-        elif os.path.exists('model_architecture.json') and os.path.exists('model.weights.h5'):
-            st.info("Reconstruyendo modelo desde JSON y pesos...")
+        if os.path.exists('keras_model.keras'):
+            st.info("Cargando modelo desde keras_model.keras...")
+            model = tf.keras.models.load_model('keras_model.keras', compile=False)
+            st.success("✅ Modelo Keras cargado exitosamente")
             
-            with open('model_architecture.json', 'r') as f:
-                model_json = f.read()
-            
-            # Limpiar el JSON para compatibilidad con versiones nuevas
-            # Reemplazar 'batch_shape' por 'input_shape'
-            import re
-            # Eliminar 'optional' y 'batch_shape' problemáticos
-            model_json = re.sub(r',?\s*"optional":\s*(true|false)', '', model_json)
-            model_json = re.sub(r'"batch_shape":\s*\[[^\]]+\],?\s*', '', model_json)
-            
-            # Reconstruir el modelo
-            model = tf.keras.models.model_from_json(model_json)
-            model.load_weights('model.weights.h5')
-            st.success("✅ Modelo reconstruido desde JSON + pesos")
-        
-        else:
-            st.error("""
-            ❌ No se encontraron archivos del modelo.
-            
-            Archivos necesarios (cualquiera de estos):
-            - model.keras
-            - model.h5
-            - model_architecture.json + model.weights.h5
-            
-            Por favor, asegúrate de tener al menos uno de estos archivos en el repositorio.
-            """)
-            return None
-        
-        # Compilar el modelo
-        if model is not None:
+            # Compilar el modelo
             model.compile(
                 optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
                 loss='binary_crossentropy',
                 metrics=['accuracy']
             )
             return model
-        
+            
+        elif os.path.exists('model.keras'):
+            st.info("Cargando modelo desde model.keras...")
+            model = tf.keras.models.load_model('model.keras', compile=False)
+            st.success("✅ Modelo Keras cargado exitosamente")
+            model.compile(
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                loss='binary_crossentropy',
+                metrics=['accuracy']
+            )
+            return model
+            
+        elif os.path.exists('keras_model.h5'):
+            st.info("Cargando modelo desde keras_model.h5...")
+            model = tf.keras.models.load_model('keras_model.h5', compile=False)
+            st.success("✅ Modelo Keras cargado exitosamente")
+            model.compile(
+                optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                loss='binary_crossentropy',
+                metrics=['accuracy']
+            )
+            return model
+            
+        else:
+            st.error("""
+            ❌ No se encontró el archivo del modelo.
+            
+            Archivos esperados:
+            - keras_model.keras (recomendado)
+            - model.keras
+            - keras_model.h5
+            
+            Por favor, asegúrate de haber subido el archivo a tu repositorio.
+            """)
+            return None
+            
     except Exception as e:
-        st.error(f"❌ Error detallado al cargar modelo: {str(e)}")
+        st.error(f"❌ Error cargando modelo: {str(e)}")
         import traceback
         st.code(traceback.format_exc())
         return None
